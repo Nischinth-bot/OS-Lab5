@@ -3,7 +3,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "wrappers.h"
-pthread_cond_t myconvar = PTHREAD_COND_INITIALIZER;
+#define MAXOUT 1000
+pthread_cond_t myconvars[MAXOUT]  = {PTHREAD_COND_INITIALIZER};
 pthread_mutex_t mymutex = PTHREAD_MUTEX_INITIALIZER;
 int global = 0;
 int numThreads = 0;
@@ -36,26 +37,23 @@ void* printNumbers(void* threadNumber){
     pthread_mutex_lock(&mymutex); //acquires the lock         
     int mult = 0;    
     int threadNum = (int) threadNumber;
-   // printf("Thread %d got the signal\n", threadNum);
-    while(global < 10)
+    while(global < MAXOUT)
     {
-
-        while((threadNum) != (nextThread - 1) && global < 10) {  
-          //   printf("Waiting on thread = %d %d\n", threadNum, nextThread);
-             pthread_cond_wait(&myconvar,&mymutex); 
-            // printf("Resuming thread = %d\n", threadNum);
+        while((threadNum) != (nextThread - 1)  && global != MAXOUT) {  
+            pthread_cond_wait(&myconvars[threadNum],&mymutex); 
         }
-        if(global < 10) {    //Double check if global still needs updating
+        if(global < MAXOUT) {    //Double check if global still needs updating
             global = threadNum + 1 + (mult * numThreads);
             fprintf(stderr,"Thread %d = %d\n", (int)threadNumber, global); 
             nextThread ++; 
             if(nextThread > numThreads) nextThread = 1; //Reset the nextThread varible, if necessary.
             mult ++; 
+            pthread_cond_signal(&myconvars[nextThread - 1]); 
         }
-     //   printf("Work done for thread %d, sending signal\n",threadNum);
-        pthread_cond_signal(&myconvar); /**Thread finishes its work for this 
-                                        iteration and signals other threads waiting on convar.**/
-        pthread_mutex_unlock(&mymutex); //releases the lock
+        int i;
+        for(i = 0; i < numThreads ; i ++){
+        pthread_cond_signal(&myconvars[i]);  
+        }
     }
     pthread_mutex_unlock(&mymutex); //releases the lock
     pthread_mutex_destroy(&mymutex);
