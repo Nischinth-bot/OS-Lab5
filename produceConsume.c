@@ -3,11 +3,13 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "wrappers.h"
-
+#define COUNTMAX 10
+#define MAXPRODUCERS 10
+#define MAXCONSUMERS 10
 
 pthread_mutex_t countMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t moreCond = PTHREAD_COND_INITIALIZER;
-pthread_cond_t lessCond = PTHREAD_COND_INITIALIZER;
+pthread_cond_t moreCond[MAXPRODUCERS] = {PTHREAD_COND_INITIALIZER};
+pthread_cond_t lessCond[MAXCONSUMERS] = {PTHREAD_COND_INITIALIZER};
 int count = 0;
 int countMax = 10;
 
@@ -19,14 +21,16 @@ int countMax = 10;
 void *produce(void *threadid)
 {
    long tid = (long)threadid;
-   while (1) //loop forever
+   int i = 5;
+   while (i > 0) //loop forever
    {
+       i --;
       pthread_mutex_lock (&countMutex);
       if (count == COUNTMAX)
          pthread_cond_wait(&lessCond, &countMutex);
       printf("Count is %d. Thread %ld is producing %d.\n", count, tid,  COUNTMAX - count);
       assert(count < COUNTMAX);
-      count = COUNTMAX;
+      count++;
       pthread_cond_signal(&moreCond);
       pthread_mutex_unlock(&countMutex);
    }
@@ -40,14 +44,16 @@ void *produce(void *threadid)
 void *consume(void *threadid)
 {
    long tid = (long)threadid;
-   while (1) //loop forever
+   int i = 5;
+   while (i > 0) //loop forever
    {
+      i --;
       pthread_mutex_lock (&countMutex);
       if (count == 0)
          pthread_cond_wait(&moreCond, &countMutex);
       printf("Count is %d. Thread %ld is consuming %d\n", count, tid,  count);
       assert(count > 0);
-      count = 0;
+      count--;
       pthread_cond_signal(&lessCond);
       pthread_mutex_unlock(&countMutex);
    }
@@ -58,11 +64,16 @@ void *consume(void *threadid)
  */
 int main (int argc, char *argv[])
 {
-   pthread_t producer;
-   pthread_t consumer;
-   long t0 = 0, t1 = 1;
-   Pthread_create(&producer, NULL, produce, (void *)t0);
-   Pthread_create(&consumer, NULL, consume, (void *)t1);
+   if(strcmp(argv[1],"-p") != 0 ||
+      strcmp(argv[3],"-c") != 0 ||
+      strcmp(argv[5],"-s") != 0 ||
+      sizeof(argv) != 8){
+   printf("Usage : produceConsume -p <numberOfproducers> -c <numberOfConsumers> -s <size>\n");
+   pthread_exit(0);
+   }
+   int numProducers = atoi(argv[2]);
+   int numConsumers = atoi(argv[4]);
+   countMax = atoi(argv[6]);
    pthread_exit(0);
 }
 
