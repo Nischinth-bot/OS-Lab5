@@ -104,11 +104,14 @@ void initArray(int ** array, int size)
  */
 void threadedSum(void* i)
 {
+
     while(indx < size){
         pthread_mutex_lock(&myMutex);
-        sum += array[indx++];
+        printf("Sum = %d\n", sum);
+        if(indx < size) sum += array[indx++];
         pthread_mutex_unlock(&myMutex);
     }
+    pthread_mutex_destroy(&myMutex);
     pthread_exit(0);
 }
 
@@ -156,14 +159,14 @@ int main(int argc, char *argv[])
     if (DEBUG) printArray(array, size);
     //get clock time before and after the sum
     
-      clock_gettime(CLOCK_MONOTONIC, &begin); 
+/**      clock_gettime(CLOCK_MONOTONIC, &begin); 
       int seqSum = sequentialSum(array,size);
       clock_gettime(CLOCK_MONOTONIC, &end);
     //calculate the difference and convert to seconds
     elapsed = end.tv_sec - begin.tv_sec;
     elapsed += (end.tv_nsec - begin.tv_nsec) / 1000000000.0;
     printf("\nSequential sum is: %d\n", seqSum);
-    printf("Cpu time: %lf seconds\n", elapsed);
+    printf("Cpu time: %lf seconds\n", elapsed);**/
     //get clock time before and after the sum
     clock_gettime(CLOCK_MONOTONIC, &begin); 
     int i;
@@ -171,10 +174,11 @@ int main(int argc, char *argv[])
     for(i = 0; i < threads; i ++){
         pthread_create(&myThreads[i], NULL, threadedSum, (void*) i);
     }
-   /** for(i = 0; i < threads; i ++){
-        int ** retval;
-        pthread_join(&myThreads[i], retval);
-    }**/
+    sleep(1);
+    for(i = 0; i < threads; i ++){
+        printf("Waiting on %d", i);
+        pthread_join(&myThreads[i], NULL);
+    }
     clock_gettime(CLOCK_MONOTONIC, &end);
     //calculate the difference and convert to seconds
     elapsed = end.tv_sec - begin.tv_sec;
