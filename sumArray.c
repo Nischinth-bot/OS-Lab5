@@ -15,14 +15,19 @@
  * 100M
  */
 
+pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
 void getArgs(int argc, char * argv[], int * size, int * threads);
 void printUsage();
 void printArray(int * array, int size);
 void initArray(int ** array, int size);
+void threadedSum(void* i);
 int sequentialSum(int * array, int size);
-
 int DEBUG = 0;
-
+//global variables used by threads.
+int* array;
+int size;
+int sum = 0;
+int indx = 0;
 /*
  * printUsage
  * This function is called if the user provides bad command
@@ -31,11 +36,11 @@ int DEBUG = 0;
  */
 void printUsage()
 {
-   printf("usage: sumArray -s <size> -t <threads> [-D]\n");
-   printf("-s <size> - size of array\n");
-   printf("-t <threads> - number of threads used for sum\n");
-   printf("-D - optional debug flag\n");
-   exit(1);
+    printf("usage: sumArray -s <size> -t <threads> [-D]\n");
+    printf("-s <size> - size of array\n");
+    printf("-t <threads> - number of threads used for sum\n");
+    printf("-D - optional debug flag\n");
+    exit(1);
 }
 
 /*
@@ -50,27 +55,27 @@ void printUsage()
  * @params: threads - pointer to an int variable to be set to
  *          the atoi of the command line arg that follows the
  *          "-t" in the array.
-*/
+ */
 void getArgs(int argc, char * argv[], int * size, int * threads)
 {
-   int i;
-   if (argc != 5 && argc != 6) printUsage();
-   for (i = 1; i < argc; i++)
-   {
-      if (strcmp("-s", argv[i]) == 0)
-      {
-         (*size) = atoi(argv[i + 1]);
-         i++;
-      } else if (strcmp("-t", argv[i]) == 0)
-      {
-         (*threads) = atoi(argv[i + 1]);
-         i++;
-      } else if (strcmp("-D", argv[i]) == 0)
-          DEBUG = 1;
-      else
-         printUsage(); 
-   }
-   if ((*size) <= 0 || (*threads) <= 0) printUsage();
+    int i;
+    if (argc != 5 && argc != 6) printUsage();
+    for (i = 1; i < argc; i++)
+    {
+        if (strcmp("-s", argv[i]) == 0)
+        {
+            (*size) = atoi(argv[i + 1]);
+            i++;
+        } else if (strcmp("-t", argv[i]) == 0)
+        {
+            (*threads) = atoi(argv[i + 1]);
+            i++;
+        } else if (strcmp("-D", argv[i]) == 0)
+            DEBUG = 1;
+        else
+            printUsage(); 
+    }
+    if ((*size) <= 0 || (*threads) <= 0) printUsage();
 }
 
 /* initArray
@@ -84,28 +89,38 @@ void getArgs(int argc, char * argv[], int * size, int * threads)
  */
 void initArray(int ** array, int size)
 {
-   int i;
-   int * ptr; 
-   srand(time(0));
-   (*array) = malloc(sizeof(int) * size);
-   ptr = (*array);
-   for (i = 0; i < size; i++)
-      ptr[i] = rand() % 10;
+    int i;
+    int * ptr; 
+    srand(time(0));
+    (*array) = malloc(sizeof(int) * size);
+    ptr = (*array);
+    for (i = 0; i < size; i++)
+        ptr[i] = rand() % 10;
 }
 
-/* sequentialSum
+/* threadedSum
  * Sums up all elements of the array
- * @param: array - point to first element in array
- * @param: size - number of elements in the array
- * @returns: sum of all elements
+ * @param: i - Thread number
  */
+void threadedSum(void* i)
+{
+    while(indx < size){
+        pthread_mutex_lock(&myMutex);
+        sum += array[indx++];
+        pthread_mutex_unlock(&myMutex);
+    }
+    pthread_exit(0);
+}
+
+
 int sequentialSum(int * array, int size)
 {
-   int i = 0, sum = 0;
-   for (i = 0; i < size; i++)
-      sum += array[i];
-   return sum;
+    int i = 0, sum = 0;
+    for (i = 0; i < size; i++)
+        sum += array[i];
+    return sum;
 }
+
 
 /* printArray
  * prints the elements of the array, 20 per line.
@@ -114,12 +129,12 @@ int sequentialSum(int * array, int size)
  */
 void printArray(int * array, int size)
 {
-   int i;
-   for (i = 0; i < size; i++)
-   {
-      if ((i % 20) == 0) printf("\n");
-      printf("%3d", array[i]);
-   }
+    int i;
+    for (i = 0; i < size; i++)
+    {
+        if ((i % 20) == 0) printf("\n");
+        printf("%3d", array[i]);
+    }
 }
 
 /* main
@@ -132,38 +147,40 @@ void printArray(int * array, int size)
  */
 int main(int argc, char *argv[])
 {
-   struct timespec begin, end;
-   double elapsed;
-   int size, threads, sum;
-   int * array;
+    struct timespec begin, end;
+    double elapsed;
+    int threads;
 
-   getArgs(argc, argv, &size, &threads);   
-   initArray(&array, size);
-   if (DEBUG) printArray(array, size);
-  
-   //get clock time before and after the sum
-   clock_gettime(CLOCK_MONOTONIC, &begin); 
-   sum = sequentialSum(array, size);
-   clock_gettime(CLOCK_MONOTONIC, &end);
-   //calculate the difference and convert to seconds
-   elapsed = end.tv_sec - begin.tv_sec;
-   elapsed += (end.tv_nsec - begin.tv_nsec) / 1000000000.0;
-   printf("\nSequential sum is: %d\n", sum);
-   printf("Cpu time: %lf seconds\n", elapsed);
-   
+    getArgs(argc, argv, &size, &threads);   
+    initArray(&array, size);
+    if (DEBUG) printArray(array, size);
+    //get clock time before and after the sum
+    
+      clock_gettime(CLOCK_MONOTONIC, &begin); 
+      int seqSum = sequentialSum(array,size);
+      clock_gettime(CLOCK_MONOTONIC, &end);
+    //calculate the difference and convert to seconds
+    elapsed = end.tv_sec - begin.tv_sec;
+    elapsed += (end.tv_nsec - begin.tv_nsec) / 1000000000.0;
+    printf("\nSequential sum is: %d\n", seqSum);
+    printf("Cpu time: %lf seconds\n", elapsed);
+    //get clock time before and after the sum
+    clock_gettime(CLOCK_MONOTONIC, &begin); 
+    int i;
+    pthread_t myThreads[threads];
+    for(i = 0; i < threads; i ++){
+        pthread_create(&myThreads[i], NULL, threadedSum, (void*) i);
+    }
+   /** for(i = 0; i < threads; i ++){
+        int ** retval;
+        pthread_join(&myThreads[i], retval);
+    }**/
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    //calculate the difference and convert to seconds
+    elapsed = end.tv_sec - begin.tv_sec;
+    elapsed += (end.tv_nsec - begin.tv_nsec) / 1000000000.0;
+    printf("\nThreaded sum is: %d\n", sum);
+    printf("Cpu time: %lf seconds\n", elapsed);
 
-   //get clock time before and after the sum
-   clock_gettime(CLOCK_MONOTONIC, &begin); 
-
-   //need to write a threadedSum function and helpers
-   //sum = threadedSum(array, size);
-
-   clock_gettime(CLOCK_MONOTONIC, &end);
-   //calculate the difference and convert to seconds
-   elapsed = end.tv_sec - begin.tv_sec;
-   elapsed += (end.tv_nsec - begin.tv_nsec) / 1000000000.0;
-   printf("\nThreaded sum is: %d\n", sum);
-   printf("Cpu time: %lf seconds\n", elapsed);
-
-   return 0;
+    return 0;
 }
