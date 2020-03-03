@@ -19,8 +19,8 @@ int main()
         sem_init(&sems[i], 0, 0);   
     }
     pthread_t threads[7];
-    
-    
+
+
     //create seven threads
     //the argument to thread i is code[i], which indicates
     //the section of the switch statement that the thread should
@@ -28,11 +28,13 @@ int main()
     for(i = 0; i < 7; i ++){
         pthread_create(&threads[i], NULL, text, (void *) i);
     }
-    
+
     //join with the threads and destroy the semaphores
-   for(i = 0; i < 7; i ++){
-    //    pthread_join(&threads[i], retval);
-        //sem_destroy(&sems[i]);   
+    for(i = 0; i < 7; i ++){
+        int * ret;
+        pthread_join(threads[i], retval);
+        sem_destroy(&sems[i]);   
+
     }
     return 0;
 }
@@ -44,7 +46,7 @@ void *text(void *arg)
 {
     int n = (int)arg;
     if(n != current) sem_wait(&sems[n]);
-      switch (n)
+    switch (n)
     {
         case 0:
             printf("A semaphore S is an integer-valued variable which can take only non-negative\n");
