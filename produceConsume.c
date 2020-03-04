@@ -25,7 +25,7 @@ void *produce(void *threadid)
     {
         pthread_mutex_lock (&countMutex);
         if (count == COUNTMAX){
-        //    printf("Thread %ld is waiting for countmax < 10", (long)tid);
+            //    printf("Thread %ld is waiting for countmax < 10", (long)tid);
             pthread_cond_wait(&lessCond, &countMutex);
         } 
         assert(count < countMax);
@@ -64,12 +64,17 @@ void *consume(void *threadid)
  */
 int main (int argc, char *argv[])
 {
-    if(strcmp(argv[1],"-p") != 0 ||
-            strcmp(argv[3],"-c") != 0 ||
-            strcmp(argv[5],"-s") != 0 ||
-            sizeof(argv) != 8){
-        printf("Usage : produceConsume -p <numberOfproducers> -c <numberOfConsumers> -s <size>\n");
-        pthread_exit(0);
+    if(argc == 8) {
+        if(strcmp(argv[1],"-p") != 0 ||
+                strcmp(argv[3],"-c") != 0 ||
+                strcmp(argv[5],"-s") != 0 ||
+                argc < 8){
+            printf("Usage : produceConsume -p <numberOfproducers> -c <numberOfConsumers> -s <size>\n");
+            pthread_exit(0);
+        }
+    } else {
+     printf("Usage : produceConsume -p <numberOfproducers> -c <numberOfConsumers> -s <size>\n");
+     pthread_exit(0);
     }
     int numProducers = atoi(argv[2]);
     int numConsumers = atoi(argv[4]);
