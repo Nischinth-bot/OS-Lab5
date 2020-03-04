@@ -4,8 +4,6 @@
 #include <assert.h>
 #include "wrappers.h"
 #define COUNTMAX 10
-#define MAXPRODUCERS 10
-#define MAXCONSUMERS 10
 
 pthread_mutex_t countMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t moreCond = PTHREAD_COND_INITIALIZER;
@@ -24,7 +22,7 @@ void *produce(void *threadid)
     while (1) //loop forever
     {
         Pthread_mutex_lock (&countMutex);
-        while(count == COUNTMAX){
+        while(count == countMax){
             //    printf("Thread %ld is waiting for countmax < 10", (long)tid);
             Pthread_cond_wait(&lessCond, &countMutex);
         } 
@@ -79,6 +77,7 @@ int main (int argc, char *argv[])
     int numProducers = atoi(argv[2]);
     int numConsumers = atoi(argv[4]);
     countMax = atoi(argv[6]);
+    countMax  = rand() % (countMax + 1) + 0;
     pthread_t prodThreads[numProducers];
     pthread_t consThreads[numConsumers];
     int i;
