@@ -34,13 +34,13 @@ int getThreadCount(int argc, char * argv[])
  * Thread function
  */
 void* printNumbers(void* threadNumber){ 
-    pthread_mutex_lock(&mymutex); //acquires the lock         
+    Pthread_mutex_lock(&mymutex); //acquires the lock         
     int mult = 0;    
     int threadNum = (int) threadNumber;
     while(global < MAXOUT)
     {
         while((threadNum) != (nextThread - 1)  && global != MAXOUT) {  
-            pthread_cond_wait(&myconvars[threadNum],&mymutex); 
+            Pthread_cond_wait(&myconvars[threadNum],&mymutex); 
         }
         if(global < MAXOUT) {    //Double check if global still needs updating
             global = threadNum + 1 + (mult * numThreads);
@@ -48,15 +48,15 @@ void* printNumbers(void* threadNumber){
             nextThread ++; 
             if(nextThread > numThreads) nextThread = 1; //Reset the nextThread varible, if necessary.
             mult ++; 
-            pthread_cond_signal(&myconvars[nextThread - 1]); 
+            Pthread_cond_signal(&myconvars[nextThread - 1]); 
         }
         int i;
         for(i = 0; i < numThreads ; i ++){
-        pthread_cond_signal(&myconvars[i]);  
+            Pthread_cond_signal(&myconvars[i]);  
         }
     }
-    pthread_mutex_unlock(&mymutex); //releases the lock
-    pthread_mutex_destroy(&mymutex);
+    Pthread_mutex_unlock(&mymutex); //releases the lock
+    //Pthread_mutex_destroy(&mymutex);
     pthread_exit(NULL);
 }
 
@@ -76,7 +76,7 @@ int main (int argc, char *argv[])
     {
         int j;
         for(j = 0; j < threadCount; j ++){
-            pthread_create(&threads[j], NULL, printNumbers, (void *) j);
+            Pthread_create(&threads[j], NULL, printNumbers, (void *) j);
         }
     }
     pthread_exit(NULL);
