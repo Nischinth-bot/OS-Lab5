@@ -23,16 +23,16 @@ void *produce(void *threadid)
     long tid = (long)threadid;
     while (1) //loop forever
     {
-        pthread_mutex_lock (&countMutex);
+        Pthread_mutex_lock (&countMutex);
         while(count == COUNTMAX){
             //    printf("Thread %ld is waiting for countmax < 10", (long)tid);
-            pthread_cond_wait(&lessCond, &countMutex);
+            Pthread_cond_wait(&lessCond, &countMutex);
         } 
         assert(count < countMax);
         if(count < countMax) count++; 
         printf("Count is %d. Thread %ld is producing %d.\n", count, tid,  COUNTMAX - count);
-        pthread_cond_signal(&moreCond);
-        pthread_mutex_unlock(&countMutex);
+        Pthread_cond_signal(&moreCond);
+        Pthread_mutex_unlock(&countMutex);
     }
 }
 
@@ -46,7 +46,7 @@ void *consume(void *threadid)
     long tid = (long)threadid; 
     while (1) //loop forever
     {
-        pthread_mutex_lock (&countMutex);
+        Pthread_mutex_lock (&countMutex);
         while(count == 0)
         {
             pthread_cond_wait(&moreCond, &countMutex);
@@ -54,8 +54,8 @@ void *consume(void *threadid)
         assert(count > 0);
         if(count > 0) count--; 
         printf("Count is %d. Thread %ld is consuming %d\n", count, tid,  count);
-        pthread_cond_signal(&lessCond);
-        pthread_mutex_unlock(&countMutex);   
+        Pthread_cond_signal(&lessCond);
+        Pthread_mutex_unlock(&countMutex);   
     }
 }
 
@@ -87,7 +87,16 @@ int main (int argc, char *argv[])
     }
     for(i = numProducers; i  < (numProducers + numConsumers); i ++){ 
         Pthread_create(&consThreads[i - numProducers],NULL,consume,(void *) i);
-    } 
+    }
+    for(i = 0; i < numProducers; i ++){
+        void** retval;
+        Pthread_join(prodThreads[i], retval);
+    }
+
+    for(i = numProducers; i  < (numProducers + numConsumers); i ++){ 
+        void** retval;
+        Pthread_join(consThreads[i], retval);
+    }
     pthread_exit(0);
 }
 
