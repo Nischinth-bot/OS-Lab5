@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
-#include <semaphore.h>
 #include "wrappers.h"
 int current = 0;
 void *text(void *arg);
@@ -16,7 +15,7 @@ int main()
     //initialize semaphores
     int i;
     for(i = 0; i < 7; i ++){
-        sem_init(&sems[i], 0, 0);   
+        Sem_init(&sems[i], 0, 0);   
     }
     pthread_t threads[7];
 
@@ -26,14 +25,14 @@ int main()
     //the section of the switch statement that the thread should
     //execute 
     for(i = 0; i < 7; i ++){
-        pthread_create(&threads[i], NULL, text, (void *) i);
+        Pthread_create(&threads[i], NULL, text, (void *) i);
     }
 
     //join with the threads and destroy the semaphores
     for(i = 0; i < 7; i ++){
         int * ret;
-        pthread_join(threads[i], retval);
-        sem_destroy(&sems[i]);   
+        Pthread_join(threads[i], retval);
+        Sem_destroy(&sems[i]);   
 
     }
     return 0;
@@ -83,7 +82,7 @@ void *text(void *arg)
             break;
     }
     current ++;
-    if(current <= 6) sem_post(&sems[current]); 
+    if(current <= 6) Sem_post(&sems[current]); 
     //printf("Exiting %d\n", n);
     pthread_exit(0);
 }
