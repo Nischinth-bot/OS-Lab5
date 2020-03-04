@@ -104,18 +104,32 @@ void initArray(int ** array, int size)
  * Sums up all elements of the array
  * @param: i - Thread number
  */
-void threadedSum(void* i)
+void threadedSum(void* threadNum)
 {
-
-    while(indx < size){
-        pthread_mutex_lock(&myMutex);
-        if(indx < size) sum += array[indx++];
-        pthread_mutex_unlock(&myMutex);
+    int tn = (int) threadNum;
+    int startIndex = tn * (size/numThreads);
+    int endIndex = startIndex + (size/numThreads);
+    int i;
+    int thisSum = 0;
+    for(i = startIndex; i < endIndex; i ++){
+        thisSum += array[i];
     }
-
     pthread_mutex_lock(&myMutex);
-    threadsFinished ++;
-    if(threadsFinished == numThreads) pthread_mutex_destroy(&myMutex);
+    sum += thisSum;
+    
+    // if threads dont equally divide entire array, add the remaining elementts
+    // at the end
+    if(tn == numThreads - 1){
+        if(size % numThreads != 0){
+            if(numThreads % 2 == 0){
+                sum += array[size - 2];
+                sum += array[size - 1];
+            }
+            else{
+                sum += array[size - 1];
+                }
+        }
+    }
     pthread_mutex_unlock(&myMutex);
     pthread_exit(0);
 }
@@ -166,9 +180,9 @@ int main(int argc, char *argv[])
     initArray(&array, size);
     if (DEBUG) printArray(array, size);
     // get clock time before and after the sum
-      clock_gettime(CLOCK_MONOTONIC, &begin); 
-      int seqSum = sequentialSum(array,size);
-      clock_gettime(CLOCK_MONOTONIC, &end);
+    clock_gettime(CLOCK_MONOTONIC, &begin); 
+    int seqSum = sequentialSum(array,size);
+    clock_gettime(CLOCK_MONOTONIC, &end);
     //calculate the difference and convert to seconds
     elapsed = end.tv_sec - begin.tv_sec;
     elapsed += (end.tv_nsec - begin.tv_nsec) / 1000000000.0;
@@ -179,7 +193,7 @@ int main(int argc, char *argv[])
     int i;
     numThreads = threads;
     pthread_t myThreads[threads];
-    
+
     //get clock time before and after the sum 
     clock_gettime(CLOCK_MONOTONIC, &begin); 
     for(i = 0; i < threads; i ++){
@@ -188,8 +202,8 @@ int main(int argc, char *argv[])
     }
     //sleep(1);
     for(i = 0; i < threads; i ++){
-      // printf("Joining thread %d\n", i);
-       pthread_join(myThreads[i], NULL);
+        // printf("Joining thread %d\n", i);
+        pthread_join(myThreads[i], NULL);
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
     //calculate the difference and convert to seconds
