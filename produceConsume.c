@@ -24,7 +24,7 @@ void *produce(void *threadid)
     while (1) //loop forever
     {
         pthread_mutex_lock (&countMutex);
-        if (count == COUNTMAX){
+        while(count == COUNTMAX){
             //    printf("Thread %ld is waiting for countmax < 10", (long)tid);
             pthread_cond_wait(&lessCond, &countMutex);
         } 
@@ -47,7 +47,7 @@ void *consume(void *threadid)
     while (1) //loop forever
     {
         pthread_mutex_lock (&countMutex);
-        if(count == 0)
+        while(count == 0)
         {
             pthread_cond_wait(&moreCond, &countMutex);
         }
@@ -64,11 +64,11 @@ void *consume(void *threadid)
  */
 int main (int argc, char *argv[])
 {
-    if(argc == 8) {
+    if(argc == 7) {
         if(strcmp(argv[1],"-p") != 0 ||
                 strcmp(argv[3],"-c") != 0 ||
                 strcmp(argv[5],"-s") != 0 ||
-                argc < 8){
+                argc < 7){
             printf("Usage : produceConsume -p <numberOfproducers> -c <numberOfConsumers> -s <size>\n");
             pthread_exit(0);
         }
