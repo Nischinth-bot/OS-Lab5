@@ -114,7 +114,7 @@ void threadedSum(void* threadNum)
     for(i = startIndex; i < endIndex; i ++){
         thisSum += array[i];
     }
-    pthread_mutex_lock(&myMutex);
+    Pthread_mutex_lock(&myMutex);
     sum += thisSum;
     
     // if threads dont equally divide entire array, add the remaining elementts
@@ -130,7 +130,7 @@ void threadedSum(void* threadNum)
                 }
         }
     }
-    pthread_mutex_unlock(&myMutex);
+    Pthread_mutex_unlock(&myMutex);
     pthread_exit(0);
 }
 
@@ -198,12 +198,12 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &begin); 
     for(i = 0; i < threads; i ++){
         //printf("Creating thread %d\n", i);
-        pthread_create(&myThreads[i], NULL, threadedSum, (void*) i);
+        Pthread_create(&myThreads[i], NULL, threadedSum, (void*) i);
     }
     //sleep(1);
     for(i = 0; i < threads; i ++){
         // printf("Joining thread %d\n", i);
-        pthread_join(myThreads[i], NULL);
+        Pthread_join(myThreads[i], NULL);
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
     //calculate the difference and convert to seconds
