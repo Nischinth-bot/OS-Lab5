@@ -10,9 +10,9 @@
  * Add comments here to indicate the number of threads that should be used so
  * that your threaded program has the best performance on array with this number
  * of elements:
- * 10G
- * 1G
- * 100M
+ * 10G - 100
+ * 1G - 40
+ * 100M - 20
  */
 
 pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
