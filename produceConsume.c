@@ -34,7 +34,7 @@ void *produce(void *threadid)
             amt = rand() % (countMax) + 0;
         }
         count += amt;
-        printf("Count is %d. Thread %ld is producing %d.\n", count, tid,  COUNTMAX - count);
+        printf("Count is %d. Thread %ld is producing %d.\n", count, tid,  countMax - count);
         Pthread_cond_signal(&moreCond);
         Pthread_mutex_unlock(&countMutex);
     }
