@@ -27,7 +27,13 @@ void *produce(void *threadid)
             Pthread_cond_wait(&lessCond, &countMutex);
         } 
         assert(count < countMax);
-        if(count < countMax) count++; 
+
+
+        int amt  = countMax + 1;
+        while((count + amt) > countMax){ 
+            amt = rand() % (countMax) + 0;
+        }
+        count += amt;
         printf("Count is %d. Thread %ld is producing %d.\n", count, tid,  COUNTMAX - count);
         Pthread_cond_signal(&moreCond);
         Pthread_mutex_unlock(&countMutex);
@@ -50,7 +56,15 @@ void *consume(void *threadid)
             pthread_cond_wait(&moreCond, &countMutex);
         }
         assert(count > 0);
-        if(count > 0) count--; 
+
+        int amt  = count;
+        while((count - amt) > 0){ 
+            amt = rand() % (countMax) + 0;
+        }
+        //printf("Count == %d Amt == %d", count,amt);
+        count -= amt;
+        if(count < 0) count == 0;
+
         printf("Count is %d. Thread %ld is consuming %d\n", count, tid,  count);
         Pthread_cond_signal(&lessCond);
         Pthread_mutex_unlock(&countMutex);   
@@ -71,13 +85,12 @@ int main (int argc, char *argv[])
             pthread_exit(0);
         }
     } else {
-     printf("Usage : produceConsume -p <numberOfproducers> -c <numberOfConsumers> -s <size>\n");
-     pthread_exit(0);
+        printf("Usage : produceConsume -p <numberOfproducers> -c <numberOfConsumers> -s <size>\n");
+        pthread_exit(0);
     }
     int numProducers = atoi(argv[2]);
     int numConsumers = atoi(argv[4]);
     countMax = atoi(argv[6]);
-    countMax  = rand() % (countMax + 1) + 0;
     pthread_t prodThreads[numProducers];
     pthread_t consThreads[numConsumers];
     int i;
